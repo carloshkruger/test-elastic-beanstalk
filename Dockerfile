@@ -1,18 +1,15 @@
-FROM node:20 AS base
+FROM node:20 AS builder
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
 COPY . .
-
-FROM base AS builder
-WORKDIR /usr/src/app
 RUN npm run build
 
-FROM node:20-alpine
+FROM node:20-slim
 WORKDIR /usr/src/app
-COPY package*.json ./
+COPY --chown=node:node package*.json ./
 RUN npm ci --omit=dev
-COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder --chown=node:node /usr/src/app/dist ./dist
 EXPOSE 3000
-
+USER node
 CMD ["npm", "run", "start:prod"]
